@@ -1,0 +1,44 @@
+name: Build NaturalDisaster
+on:
+  push:
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Siapkan project
+        run: |
+          mkdir -p jni include
+          cp naturaldisaster.cpp jni/
+          cat > jni/Android.mk << 'SRC_EOF'
+          LOCAL_PATH := $(call my-dir)
+          include $(CLEAR_VARS)
+          LOCAL_MODULE    := NaturalDisaster
+          LOCAL_SRC_FILES := naturaldisaster.cpp ../include/mod/logger.cpp ../include/mod/config.cpp
+          LOCAL_C_INCLUDES += $(LOCAL_PATH)/../include
+          LOCAL_CPPFLAGS  += -std=c++17 -O2 -fvisibility=hidden
+          LOCAL_LDLIBS    := -llog
+          include $(BUILD_SHARED_LIBRARY)
+          SRC_EOF
+          cat > jni/Application.mk << 'SRC_EOF'
+          APP_ABI      := armeabi-v7a
+          APP_PLATFORM := android-21
+          APP_STL      := c++_static
+          APP_CPPFLAGS += -I/tmp/aml -I/tmp/aml/include
+          SRC_EOF
+      - name: Ambil header AML
+        run: |
+          git clone --depth 1 https://github.com/RusJJ/AndroidModLoader /tmp/aml
+          find /tmp/aml -name amlmod.h
+          AMLH=$(find /tmp/aml -name amlmod.h | head -n 1)
+          test -n "$AMLH"
+          mkdir -p include/mod
+          cp -r "$(dirname "$AMLH")"/* include/mod/
+          ls -R include/mod | head -40
+      - name: Build
+        run: $ANDROID_NDK_HOME/ndk-build NDK_PROJECT_PATH=. APP_BUILD_SCRIPT=jni/Android.mk NDK_APPLICATION_MK=jni/Application.mk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: libNaturalDisaster
+          path: libs/armeabi-v7a/libNaturalDisaster.so
