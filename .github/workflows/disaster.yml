@@ -17,7 +17,7 @@ jobs:
           LOCAL_MODULE    := NaturalDisaster
           LOCAL_SRC_FILES := naturaldisaster.cpp ../include/mod/logger.cpp ../include/mod/config.cpp
           LOCAL_C_INCLUDES += $(LOCAL_PATH)/../include
-          LOCAL_CPPFLAGS  += -std=c++17 -O2 -fvisibility=hidden
+          LOCAL_CPPFLAGS  += -std=c++17 -O2
           LOCAL_LDLIBS    := -llog
           include $(BUILD_SHARED_LIBRARY)
           SRC_EOF
